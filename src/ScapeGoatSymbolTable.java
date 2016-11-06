@@ -69,8 +69,8 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
     NodeCount = NodeCount + 1;
     MaxNodeCount = Math.max(NodeCount, MaxNodeCount);
-    if(depth > (Math.log(NodeCount) / Math.log(1/alpha) + 1) ){
-      rebuild(x);
+    if(NodeCount > 2 && (depth > (Math.log(NodeCount) / Math.log(1/alpha) + 1)) ){
+      rebuild(findScapeGoat(x));
     }
   }
 
@@ -111,6 +111,11 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
         x.parent.right = null;
         x = null;
       }
+      NodeCount--;
+      if(NodeCount < alpha * MaxNodeCount){
+        rebuild(root);
+        MaxNodeCount = NodeCount;
+      }
     }else{
       //replace x key with key of right-most child in left branch
       K tempKey = findMaxChild(x).key;
@@ -122,7 +127,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   private Node findMaxChild(Node n){
     if(n.left == null){
       return n.right;
-    }else if(n.left != null && n.left.right == null){
+    }else if(n.left.right == null){
       return n.left;
     }else{
       Node temp = n.left.right;
@@ -141,15 +146,35 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
   }
 
-  private void rebuild(Node x){
-    //todo
-
+  private Node findScapeGoat(Node x){
+    double alphaSize, siblingSize, selfSize = 0;
+    Node sibling;
+    Node scapeGoat = null;
+    Node temp = x.parent;
+    while(temp != null){ //find scapegoat candidate closest to root
+      if(temp == temp.left){
+        sibling = temp.right;
+      }else{
+        sibling = temp.left;
+      }
+      selfSize = selfSize + 1;
+      siblingSize = size(sibling);
+      alphaSize = alpha * (siblingSize + selfSize + 1);
+      if( (size(sibling) > alphaSize ) || (selfSize > alphaSize) ){
+        scapeGoat = temp;
+      }
+      temp = temp.parent;
+    }
+    return scapeGoat;
   }
 
   private void flatten(){
-    //todo
+
   }
 
+  private void rebuild(Node x){
+    //todo
+  }
 
   public Vector<String> serialize() {
     Vector<String> vec = new Vector<String>();

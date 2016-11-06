@@ -1,6 +1,9 @@
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.Vector;
+import java.lang.Math;
 
 public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTable<K> {
 
@@ -14,10 +17,13 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   }
 
   private Node root;
-  public double alpha;
+  private double alpha;
+  private int MaxNodeCount, NodeCount;
 
-  public ScapeGoatSymbolTable() {
+  private ScapeGoatSymbolTable() {
     root = null;
+    MaxNodeCount = 0;
+    NodeCount = 0;
   }
 
   public void setAlpha(double a){
@@ -28,35 +34,49 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   public void insert(K key) {
     if (root == null) {
       root = new Node(key);
+      root.parent = null;
+      root.left = null;
+      root.right = null;
       return;
     }
     Node x = root;
+    int depth = 1;
     while (true) {
       int cmp = key.compareTo(x.key);
       if (cmp < 0) {
         if (x.left == null) {
           x.left = new Node(key);
           x.left.parent = x;
-          x = x.left;
+          x.left.left = null;
+          x.left.right = null;
+          x = x.left; //to check balance
           break;
         }
         x = x.left;
+        depth = depth + 1;
       }else {
         if (x.right == null) {
           x.right = new Node(key);
           x.right.parent = x;
-          x = x.right;
+          x.right.left = null;
+          x.right.right = null;
+          x = x.right; //to check balance
           break;
         }
         x = x.right;
+        depth = depth + 1;
       }
     }
-    balance(x);
+    NodeCount = NodeCount + 1;
+    MaxNodeCount = Math.max(NodeCount, MaxNodeCount);
+    if(depth > (Math.log(NodeCount) / Math.log(1/alpha) + 1) ){
+      rebuild(x);
+    }
   }
 
 
   @Override
-  public void search(K key) {
+  public Node search(K key) {
     Node x = root;
     while (true) {
       int cmp = key.compareTo(x.key);
@@ -77,11 +97,40 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
         x = x.right;
       }
     }
+    return x;
   }
 
   @Override
   public void delete(K key){
-    //todo
+    Node x = search(key);
+    if(x.left == null && x.right == null){ //x is a leaf
+      if(x == x.parent.left){
+        x.parent.left = null;
+        x = null;
+      }else{
+        x.parent.right = null;
+        x = null;
+      }
+    }else{
+      //replace x key with key of right-most child in left branch
+      K tempKey = findMaxChild(x).key;
+      delete(tempKey);
+      x.key = tempKey;
+    }
+  }
+
+  private Node findMaxChild(Node n){
+    if(n.left == null){
+      return n.right;
+    }else if(n.left != null && n.left.right == null){
+      return n.left;
+    }else{
+      Node temp = n.left.right;
+      while(temp.right != null){
+        temp = temp.right;
+      }
+      return temp;
+    }
   }
 
   private int size(Node p){
@@ -92,75 +141,13 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
   }
 
-  private void balance(Node p){
+  private void rebuild(Node x){
     //todo
+
   }
 
   private void flatten(){
     //todo
-  }
-
-  private void rotateLeft(Node p) {
-    Node x = p.right;
-    if (p == root) {
-      if (x.left != null) {
-        p.right = x.left;
-        p.right.parent = p;
-      } else {
-        p.right = null;
-      }
-      x.left = p;
-      p.parent = x;
-      x.parent = null;
-      root = x;
-    } else {
-      if (x.left != null) {
-        p.right = x.left;
-        p.right.parent = p;
-      } else {
-        p.right = null;
-      }
-      x.parent = p.parent;
-      if (x.parent.left == p) {
-        x.parent.left = x;
-      } else {
-        x.parent.right = x;
-      }
-      x.left = p;
-      p.parent = x;
-    }
-  }
-
-
-  private void rotateRight(Node p) {
-    Node x = p.left;
-    if (p == root) {
-      if (x.right != null) {
-        p.left = x.right;
-        p.left.parent = p;
-      } else {
-        p.left = null;
-      }
-      x.right = p;
-      p.parent = x;
-      x.parent = null;
-      root = x;
-    } else {
-      if (x.right != null) {
-        p.left = x.right;
-        p.left.parent = p;
-      } else {
-        p.left = null;
-      }
-      x.parent = p.parent;
-      if (x.parent.left == p) {
-        x.parent.left = x;
-      } else {
-        x.parent.right = x;
-      }
-      x.right = p;
-      p.parent = x;
-    }
   }
 
 

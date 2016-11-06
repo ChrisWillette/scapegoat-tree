@@ -1,7 +1,6 @@
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
+import java.io.*;
+import java.util.Scanner;
 import java.util.Vector;
 import java.lang.Math;
 
@@ -70,7 +69,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     NodeCount = NodeCount + 1;
     MaxNodeCount = Math.max(NodeCount, MaxNodeCount);
     if(NodeCount > 2 && (depth > (Math.log(NodeCount) / Math.log(1/alpha) + 1)) ){
-      rebuild(findScapeGoat(x));
+      findScapeGoat(x);
     }
   }
 
@@ -113,7 +112,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
       }
       NodeCount--;
       if(NodeCount < alpha * MaxNodeCount){
-        rebuild(root);
+        root = rebuild(NodeCount, root);
         MaxNodeCount = NodeCount;
       }
     }else{
@@ -146,8 +145,11 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
   }
 
-  private Node findScapeGoat(Node x){
-    double alphaSize, siblingSize, selfSize = 0;
+  private void findScapeGoat(Node x){
+    int siblingSize, selfSize, sgSize;
+    selfSize = 0;
+    sgSize = 0;
+    double alphaSize;
     Node sibling;
     Node scapeGoat = null;
     Node temp = x.parent;
@@ -162,19 +164,46 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
       alphaSize = alpha * (siblingSize + selfSize + 1);
       if( (size(sibling) > alphaSize ) || (selfSize > alphaSize) ){
         scapeGoat = temp;
+        sgSize = siblingSize + selfSize + 1;
       }
       temp = temp.parent;
     }
-    return scapeGoat;
+    if(scapeGoat.parent == null){
+      root = rebuild(sgSize, scapeGoat);
+    }else if(scapeGoat == scapeGoat.parent.right){
+      scapeGoat.parent.right = rebuild(sgSize, scapeGoat);
+    }else
+      scapeGoat.parent.left = rebuild(sgSize, scapeGoat);
   }
 
-  private void flatten(){
-
+  private Node flatten(Node x, Node y){
+    if(x == null){
+      return y;
+    }else{
+      x.right = flatten(x.right, y);
+      return flatten(x.left, x);
+    }
   }
 
-  private void rebuild(Node x){
-    //todo
+  private Node rebuild(int n, Node scapeGoat){
+    Node w = null;
+    Node z = flatten(scapeGoat, w);
+    buildTree(n, z);
+    return w.left;
   }
+
+  private Node buildTree(int n, Node x){
+    if(n == 0){
+      x.left = null;
+      return x;
+    }
+    Node r = buildTree((int) Math.ceil((n-1)/2), x);
+    Node s = buildTree((int) Math.floor((n-1)/2), r.right);
+    r.right = s.left;
+    s.left = r;
+    return s;
+  }
+
 
   public Vector<String> serialize() {
     Vector<String> vec = new Vector<String>();
@@ -195,8 +224,8 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
 
 
   void printTree(String fname) {
-    Vector<String> st = serialize();
-    TreePrinter treePrinter = new TreePrinter(st);
+    Vector<String> sgt = serialize();
+    TreePrinter treePrinter = new TreePrinter(sgt);
     treePrinter.fontSize = 14;
     treePrinter.nodeRadius = 14;
     try {
@@ -204,18 +233,38 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
       PrintStream ps = new PrintStream(out);
       treePrinter.printSVG(ps);
     } catch (FileNotFoundException e) {
+      e.printStackTrace();
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws FileNotFoundException {
     ScapeGoatSymbolTable<Integer> table = new ScapeGoatSymbolTable<>();
 
-		/*
-		handle input file
-
-		 */
-
-
+    //File f = new File("src/tree.txt");
+    //Scanner reader = new Scanner(new FileInputStream(f));
+    InputStream input = ScapeGoatSymbolTable.class.getResourceAsStream("/src/tree.text");
+    Scanner reader = new Scanner(input);
+    while(reader.hasNext()){
+      String command = reader.next();
+      if(command.equals("BuildTree")){
+        table.setAlpha(reader.nextDouble());
+        table.insert(reader.nextInt());
+      }else if(command.equals("Insert")){
+        table.insert(reader.nextInt());
+      }else if(command.equals("Delete")){
+        table.delete(reader.nextInt());
+      }else if(command.equals("Search")){
+        table.search(reader.nextInt());
+      }else if(command.equals("Print")){
+        table.printTree("tree.svg");
+      }else if(command.equals("Done")){
+        return;
+      }else{
+        System.out.println("invalid command " + command);
+        return;
+      }
+    }
+    /*
     Vector<String> serializedTable = table.serialize();
     TreePrinter treePrinter = new TreePrinter(serializedTable);
     FileOutputStream out = null;
@@ -226,6 +275,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
     PrintStream ps = new PrintStream(out);
     treePrinter.printSVG(ps);
-  }
+    */
 
+  }
 }

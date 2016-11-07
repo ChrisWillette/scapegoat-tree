@@ -1,18 +1,26 @@
 
+
 import java.io.*;
 import java.util.*;
 import java.lang.Math;
 
 public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTable<K> {
 
-  public class Node {
+  public class Node implements Comparable<Object>{
     K key;
     Node left, right, parent;
-    public int getKey(){
-      return (int) this.key;
-    }
+
     Node(K k) {
       key = k;
+    }
+
+    public K getKey(){
+      return key;
+    }
+
+    public int compareTo(Object obj){
+      Node node = (Node) obj;
+      return this.key.compareTo(node.getKey());
     }
   }
 
@@ -103,29 +111,35 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   @Override
   public void delete(K key) {
     Node x = search(key);
-    if(x.left == null && x.right == null){ //x is a leaf
-      if(x == x.parent.left){
-        x.parent.left = null;
-        x = null;
+    //replace x key with key of right-most child in left branch
+    Node temp = findMaxChild(x);
+    x.key = temp.key;
+    if(temp.right == null && temp.left == null){//temp is a leaf
+      if(temp == temp.parent.left){
+        temp.parent.left = null;
       }else {
-        x.parent.right = null;
-        x = null;
+        temp.parent.right = null;
       }
+      temp.parent = null;
+      temp.left = null;
+      temp.right = null;
       NodeCount--;
       if(NodeCount < alpha * MaxNodeCount){
         //root = rebuild(NodeCount, root);
         root = rebuild(root);
         MaxNodeCount = NodeCount;
       }
-    }else {
-      //replace x key with key of right-most child in left branch
-      K tempKey = findMaxChild(x).key;
-      delete(tempKey);
-      x.key = tempKey;
-    }
-  }
+      return;
+    }else{
+      delete(temp.key);  //this shouldn't actually delete a node directly
+    }                   //instead replaces it with successor
+  }                     //then deletes the successor if it's a leaf,
+                        // otherwise repeats on successor
 
-  private Node findMaxChild(Node n) {
+
+
+  private Node findMaxChild(Node n) { //finds right-most child in left branch
+    if(n.left == null && n.right == null) return n;
     if(n.left == null){
       return n.right;
     }else if(n.left.right == null){
@@ -150,7 +164,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   private void findScapeGoat(Node x) {
     int siblingSize, selfSize, sgSize;
     selfSize = 0;
-    sgSize = 0;
+    sgSize = 0; //not needed
     double alphaSize;
     Node sibling;
     Node scapeGoat = null;
@@ -166,7 +180,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
       alphaSize = alpha * (siblingSize + selfSize + 1);
       if((size(sibling) > alphaSize) || (selfSize > alphaSize)){
         scapeGoat = temp;
-        sgSize = siblingSize + selfSize + 1;
+        sgSize = siblingSize + selfSize + 1; //only for broken rebuild code
       }
       temp = temp.parent;
     }
@@ -182,16 +196,12 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   }
 
 
-  class KeyComparator implements Comparator<Node>{
-    public int compare(Node node1, Node node2){
-      return node1.getKey() - node2.getKey();
-    }
-  }
 
-  private List<Node> buildList (Node scapeGoat){
+
+  private ArrayList<Node> buildList (Node scapeGoat){
     ArrayList<Node> list = new ArrayList<Node>();
     buildListAux(scapeGoat, list);
-    Collections.sort(list, new KeyComparator());
+    Collections.sort(list);
     return list;
   }
 
@@ -206,10 +216,20 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   }
 
   private Node rebuild(Node scapeGoat){
-    buildList(scapeGoat);//ordered list of nodes
-
+    ArrayList<Node> NodeList = buildList(scapeGoat);
+    return buildTree(NodeList, 0, NodeList.size() -1);
   }
 
+  private Node buildTree(ArrayList<Node> list, int first, int last){
+    if(first > last){
+      return null;
+    }
+    int mid = first + (last - first)/2;
+    Node head = list.get(mid);
+    head.left = buildTree(list, first, mid -1);
+    head.right = buildTree(list, mid+1, last);
+    return head;
+  }
 
 
   //that published algorithm for in-place rebuild is broken
@@ -306,18 +326,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }catch(FileNotFoundException e){
       e.printStackTrace();
     }
-/*
-    Vector<String> serializedTable = table.serialize();
-    TreePrinter treePrinter = new TreePrinter(serializedTable);
-    FileOutputStream out = null;
-    try {
-      out = new FileOutputStream("tree.svg");
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    PrintStream ps = new PrintStream(out);
-    treePrinter.printSVG(ps);
-    */
+
 
   }
 }

@@ -1,4 +1,4 @@
-BuildTree 0.71 256
+BuildTree 0.57 256
 Insert	293
 Insert	2
 Insert	230
@@ -12,18 +12,21 @@ Insert	584
 Insert	15
 Insert	16
 Insert	17
+Print
+Done
 Insert	18
 Insert	19
 Insert	20
-Insert	527
-Insert	530
-Delete  18
 Print
 Done
+Insert	527
+Insert	530
 Insert	7
 Insert	59
 Insert	62
 Insert	65
+Print
+Done
 Insert	68
 Insert	71
 Insert	77
@@ -51,6 +54,8 @@ Insert	155
 Insert	158
 Insert	161
 Insert	560
+Print
+Done
 Insert	323
 Insert	326
 Insert	92

@@ -57,7 +57,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
           x.left.parent = x;
           x.left.left = null;
           x.left.right = null;
-          x = x.left; //to check balance
+          //x = x.left; //to check balance
           break;
         }
         x = x.left;
@@ -68,7 +68,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
           x.right.parent = x;
           x.right.left = null;
           x.right.right = null;
-          x = x.right; //to check balance
+          //x = x.right; //to check balance
           break;
         }
         x = x.right;
@@ -77,7 +77,12 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }
     NodeCount = NodeCount + 1;
     MaxNodeCount = Math.max(NodeCount, MaxNodeCount);
-    if(NodeCount > 2 && (depth > (Math.log(NodeCount) / Math.log(1 / alpha) + 1))){
+    checkBalance(x, depth);
+  }
+
+  private void checkBalance(Node x, int depth){
+    double aWeight = (Math.log(NodeCount) / Math.log(1 / alpha) + 1);
+    if(depth > aWeight){
       findScapeGoat(x);
     }
   }
@@ -169,6 +174,10 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   }
 
   private void findScapeGoat(Node x) {
+    /*if(x == root){
+      root = rebuild(root);
+      return;
+    }*/
     int siblingSize, selfSize, sgSize;
     selfSize = 0;
     sgSize = 0; //not needed
@@ -197,12 +206,23 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     }else if(scapeGoat == scapeGoat.parent.right){
       //scapeGoat.parent.right = rebuild(sgSize, scapeGoat);
       scapeGoat.parent.right = rebuild(scapeGoat);
-    }else
+    }else {
       //scapeGoat.parent.left = rebuild(sgSize, scapeGoat);
       scapeGoat.parent.left = rebuild(scapeGoat);
+    }
+   /* int height = getMaxHeight(root);
+    double aWeight = (Math.log(NodeCount) / Math.log(1 / alpha) + 1);
+    if(height > aWeight){ //make sure rebuilt tree is balanced
+      root = rebuild(root);
+    }*/
   }
 
-
+  private int getMaxHeight(Node n){
+    if(n == null) return 0;
+    int lHeight = getMaxHeight(n.left);
+    int rHeight = getMaxHeight(n.right);
+    return Math.max(lHeight, rHeight) + 1;
+  }
 
 
   private ArrayList<Node> buildList (Node scapeGoat){

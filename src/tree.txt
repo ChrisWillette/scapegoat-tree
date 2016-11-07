@@ -11,7 +11,7 @@ Insert	263
 Insert	584
 Insert	15
 Insert	16
-Delete 256
+Delete  11
 Print
 Done
 Insert	17

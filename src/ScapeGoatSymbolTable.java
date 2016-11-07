@@ -111,32 +111,58 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
   @Override
   public void delete(K key) {
     Node x = search(key);
-    //replace x key with key of right-most child in left branch
     Node temp = findMaxChild(x);
-    x.key = temp.key;
-    if(temp.right == null && temp.left == null){//temp is a leaf
-      if(temp == temp.parent.left){
-        temp.parent.left = null;
-      }else {
-        temp.parent.right = null;
+    while(true){
+      //Node x = search(key);
+      //replace x key with key of right-most child in left branch
+      //Node temp = findMaxChild(x); //sorta worked
+
+
+      x.key = temp.key;
+      //temp = findMaxChild(temp);
+
+      //reattach block
+      if(temp.right == null && temp.left == null){//temp is a leaf
+        if(temp == temp.parent.left){
+          temp.parent.left = null;
+        }else {
+          temp.parent.right = null;
+        }
+        NodeCount--;
+        break;
+      }else if(temp.left == null && temp.right != null){ //no left, move up right
+        if(temp == temp.parent.right){
+          temp.parent.right = temp.right;
+        }else temp.parent.left = temp.right;
+        break;
+      }else if(temp.left != null && temp.right == null){ //no right, move around left
+        if(temp == temp.parent.right){
+          temp.parent.right = temp.left;
+        }else temp.parent.left = temp.left;
+        break;
+      }else{
+        //temp = findMaxChild(temp);
+        continue; //if no conditions met, cycle back through while loop
       }
-      temp.parent = null;
-      temp.left = null;
-      temp.right = null;
-      NodeCount--;
+    }
+  }
+
+      /*
       if(NodeCount < alpha * MaxNodeCount){
         //root = rebuild(NodeCount, root);
         root = rebuild(root);
         MaxNodeCount = NodeCount;
-      }
-      return;
-    }else{
+      }*/ //commented for testing delete
+
+/*
+
+    else{
       delete(temp.key);  //this shouldn't actually delete a node directly
     }                   //instead replaces it with successor
   }                     //then deletes the successor if it's a leaf,
                         // otherwise repeats on successor
 
-
+*/
 
   private Node findMaxChild(Node n) { //finds right-most child in left branch
     if(n.left == null && n.right == null) return n;
@@ -207,7 +233,8 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
 
   private void buildListAux(Node tree, ArrayList<Node> list) {
     if(tree == null){
-      list.add(null);
+      return;
+      //list.add(null);
     }else {
       list.add(tree);
       buildListAux(tree.left, list);

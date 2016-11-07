@@ -11,15 +11,13 @@ Insert	263
 Insert	584
 Insert	15
 Insert	16
-Delete  11
-Print
-Done
 Insert	17
 Insert	18
 Insert	19
 Insert	20
 Insert	527
 Insert	530
+Delete  18
 Print
 Done
 Insert	7

@@ -113,14 +113,7 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
     Node x = search(key);
     Node temp = findMaxChild(x);
     while(true){
-      //Node x = search(key);
-      //replace x key with key of right-most child in left branch
-      //Node temp = findMaxChild(x); //sorta worked
-
-
       x.key = temp.key;
-      //temp = findMaxChild(temp);
-
       //reattach block
       if(temp.right == null && temp.left == null){//temp is a leaf
         if(temp == temp.parent.left){
@@ -141,28 +134,16 @@ public class ScapeGoatSymbolTable<K extends Comparable<K>> implements SymbolTabl
         }else temp.parent.left = temp.left;
         break;
       }else{
-        //temp = findMaxChild(temp);
         continue; //if no conditions met, cycle back through while loop
       }
     }
+    if(NodeCount < alpha * MaxNodeCount){
+      //root = rebuild(NodeCount, root);
+      root = rebuild(root);
+      MaxNodeCount = NodeCount;
+    }
   }
 
-      /*
-      if(NodeCount < alpha * MaxNodeCount){
-        //root = rebuild(NodeCount, root);
-        root = rebuild(root);
-        MaxNodeCount = NodeCount;
-      }*/ //commented for testing delete
-
-/*
-
-    else{
-      delete(temp.key);  //this shouldn't actually delete a node directly
-    }                   //instead replaces it with successor
-  }                     //then deletes the successor if it's a leaf,
-                        // otherwise repeats on successor
-
-*/
 
   private Node findMaxChild(Node n) { //finds right-most child in left branch
     if(n.left == null && n.right == null) return n;
